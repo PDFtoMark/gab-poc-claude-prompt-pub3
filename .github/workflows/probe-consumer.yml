@@ -1,0 +1,31 @@
+name: Probe Consumer
+on:
+  workflow_run:
+    workflows: ["Probe Upstream"]
+    types: [completed]
+permissions: {}
+jobs:
+  consumer:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.path == '.github/workflows/probe-up.yml'
+    runs-on: ubuntu-latest
+    steps:
+      - name: dump
+        env:
+          HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
+          BASE_REPO: ${{ github.event.workflow_run.repository.full_name }}
+          HEAD_BRANCH: ${{ github.event.workflow_run.head_branch }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          PIN_REPO: ${{ github.event.workflow_run.pull_requests[0].head.repo.full_name }}
+          PRS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
+          RUN_NAME: ${{ github.event.workflow_run.name }}
+        run: |
+          echo "HEAD_REPO=[$HEAD_REPO]"
+          echo "BASE_REPO=[$BASE_REPO]"
+          echo "HEAD_BRANCH=[$HEAD_BRANCH]"
+          echo "HEAD_SHA=[$HEAD_SHA]"
+          echo "PIN_REPO=[$PIN_REPO]"
+          echo "RUN_NAME=[$RUN_NAME]"
+          echo "PRS=$PRS"
