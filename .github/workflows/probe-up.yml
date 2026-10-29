@@ -1,0 +1,10 @@
+name: Probe Upstream
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions: {}
+jobs:
+  up:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "upstream ok"
