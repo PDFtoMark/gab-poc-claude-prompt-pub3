@@ -2,6 +2,8 @@ name: claude-prompt-poc
 on:
   pull_request_review_comment:
     types: [created]
+  issue_comment:
+    types: [created]
 permissions:
   contents: write
   pull-requests: write
